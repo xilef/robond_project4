@@ -27,6 +27,7 @@ private:
 		m_pubMotorCommand.publish(twMotorCommand);
 
 		res.msg_feedback = "Movement set - linear.x: " + std::to_string(req.linear_x) + " angular.z: " + std::to_string(req.angular_z) + "!";
+
 		ROS_INFO_STREAM(res.msg_feedback);
 	}
 
