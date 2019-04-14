@@ -5,20 +5,20 @@
   <node name="drive_bot" type="drive_bot" pkg="ball_chaser" output="screen" />
   <node name="process_image" type="process_image" pkg="ball_chaser" output="screen">
     <rosparam>
-      maxBallWidth: 400
+      maxBallWidth: 600
       maxBallWidthVariance: 50
-      fastForwardMaxDistance: 50
+      fastForwardMaxDistance: 30
       maxForwardSpeed: 3.0
       fastForwardSpeed: 0.5
       slowForwardSpeed: 0.2
       maxBackwardSpeed: 1.0
       backwardSpeed: 0.1
-      maxRotateSpeed: 3.0
-      fastRotateSpeed: 1.5
-      slowRotateSpeed: 0.5
-      findRotateSpeed: 0.5
-      sideRegionSizeFactor: 0.9
-      fastRotateSizeFactor: 0.8
+      maxOverallRotateSpeed: 3.0
+      maxRotateSpeed: 2.0
+      minRotateSpeed: 1.0
+      findRotateSpeed: -1.5
+      maxSideRegionSizeFactor: 0.9
+      minSideRegionSizeFactor: 0.9
       maxRotateStep: 300
     </rosparam>
   </node>

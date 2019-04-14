@@ -9,7 +9,7 @@ public:
 	{
 		ROS_INFO_STREAM("Setup drive_bot service class.");
 
-		m_pubMotorCommand = m_hNode.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
+		m_pubMotorCommand = m_hNode.advertise<geometry_msgs::Twist>("/cmd_vel", 100);
 
 		m_serv = m_hNode.advertiseService("/ball_chaser/command_robot", &DriveBotService::driveRequestHandler, this);
 
@@ -28,6 +28,7 @@ private:
 
 		res.msg_feedback = "Movement set - linear.x: " + std::to_string(req.linear_x) + " angular.z: " + std::to_string(req.angular_z) + "!";
 
+		//return true;
 		ROS_INFO_STREAM(res.msg_feedback);
 	}
 

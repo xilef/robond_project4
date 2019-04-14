@@ -7,15 +7,14 @@ class ProcessImageNode
 public:
 	ProcessImageNode()
 	{
-		if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+		/*if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
 			ros::console::notifyLoggerLevelsChanged();
-		}
-
+		}*/
 		ROS_INFO_STREAM("Setup ball chasing service");
 
 		m_client = m_hNode.serviceClient<ball_chaser::DriveToTarget>("/ball_chaser/command_robot");
 
-		m_subImage = m_hNode.subscribe("/camera/rgb/image_raw", 10, &ProcessImageNode::processImageCallback, this);
+		m_subImage = m_hNode.subscribe("/camera/rgb/image_raw", 30, &ProcessImageNode::processImageCallback, this);
 
 		std::string strNodeName = ros::this_node::getName();
 
@@ -52,24 +51,24 @@ public:
 			m_fBackwardSpeed *= -1;
 		}
 
-		float fMaxRotateSpeed;
-		m_hNode.getParam(strNodeName + "/maxRotateSpeed", fMaxRotateSpeed);
-		fMaxRotateSpeed = std::min(std::max(fMaxRotateSpeed, 0.1f), 5.0f);
+		float fMaxOverallRotateSpeed;
+		m_hNode.getParam(strNodeName + "/maxOverallRotateSpeed", fMaxOverallRotateSpeed);
+		fMaxOverallRotateSpeed = std::min(std::max(fMaxOverallRotateSpeed, 0.1f), 5.0f);
 
-		m_hNode.getParam(strNodeName + "/fastRotateSpeed", m_fFastRotateSpeed);
-		m_fFastRotateSpeed = std::min(std::max(m_fFastRotateSpeed, 0.1f), fMaxRotateSpeed);
+		m_hNode.getParam(strNodeName + "/maxRotateSpeed", m_fMaxRotateSpeed);
+		m_fMaxRotateSpeed = std::min(std::max(m_fMaxRotateSpeed, 0.1f), fMaxOverallRotateSpeed);
 
-		m_hNode.getParam(strNodeName + "/slowRotateSpeed", m_fSlowRotateSpeed);
-		m_fSlowRotateSpeed = std::min(std::max(m_fSlowRotateSpeed, 0.1f), m_fFastRotateSpeed);
+		m_hNode.getParam(strNodeName + "/minRotateSpeed", m_fMinRotateSpeed);
+		m_fMinRotateSpeed = std::min(std::max(m_fMinRotateSpeed, 0.1f), m_fMaxRotateSpeed);
 
 		m_hNode.getParam(strNodeName + "/findRotateSpeed", m_fFindRotateSpeed);
-		m_fFindRotateSpeed = std::min(std::max(m_fFindRotateSpeed, 0.1f), m_fFastRotateSpeed);
+		m_fFindRotateSpeed = std::min(std::max(m_fFindRotateSpeed, -(fMaxOverallRotateSpeed)), fMaxOverallRotateSpeed);
 
-		m_hNode.getParam(strNodeName + "/sideRegionSizeFactor", m_fSideRegionSizeFactor);
-		m_fSideRegionSizeFactor = std::min(std::max(m_fSideRegionSizeFactor, 0.1f), 0.9f);
+		m_hNode.getParam(strNodeName + "/maxSideRegionSizeFactor", m_fMaxSideRegionSizeFactor);
+		m_fMaxSideRegionSizeFactor = std::min(std::max(m_fMaxSideRegionSizeFactor, 0.2f), 0.99f);
 
-		m_hNode.getParam(strNodeName + "/fastRotateSizeFactor", m_fFastRotateSizeFactor);
-		m_fFastRotateSizeFactor = std::min(std::max(m_fFastRotateSizeFactor, 0.1f), 0.9f);
+		m_hNode.getParam(strNodeName + "/minSideRegionSizeFactor", m_fMinSideRegionSizeFactor);
+		m_fMinSideRegionSizeFactor = std::min(std::max(m_fMinSideRegionSizeFactor, 0.1f), m_fMaxSideRegionSizeFactor);
 
 		int iMaxRotateStep;
 		m_hNode.getParam(strNodeName + "/maxRotateStep", iMaxRotateStep);
@@ -84,6 +83,8 @@ private:
 	ros::Subscriber 	m_subImage;
 	ros::ServiceClient 	m_client;
 
+	unsigned int		m_uiPrevBallPos;
+
 	unsigned int 		m_uiMaxBallWidth;
 	unsigned int		m_uiMaxBallWidthVariance;
 
@@ -93,8 +94,8 @@ private:
 	float			m_fSlowForwardSpeed;
 	float			m_fBackwardSpeed;
 
-	float			m_fFastRotateSpeed;
-	float			m_fSlowRotateSpeed;
+	float			m_fMaxRotateSpeed;
+	float			m_fMinRotateSpeed;
 	float			m_fFindRotateSpeed;
 
 	bool			m_bBallFound;
@@ -102,9 +103,9 @@ private:
 	unsigned int		m_uiRotateStep;
 	unsigned int		m_uiMaxRotateStep;
 
-	float			m_fSideRegionSizeFactor;
+	float			m_fMaxSideRegionSizeFactor;
+	float			m_fMinSideRegionSizeFactor;
 
-	float			m_fFastRotateSizeFactor;
 
 	void driveRobot(float fLinX, float fAngz)
 	{
@@ -117,6 +118,89 @@ private:
 		{
 			ROS_ERROR("Failed to call service!");
 		}
+	}
+
+	void determineMovement(unsigned int uiWidth, unsigned int uiBallPos, bool bPartialBallFound, unsigned int uiImgWidth)
+	{
+		unsigned int uiSideRegionWidth = ((uiImgWidth / 2) * m_fMaxSideRegionSizeFactor);
+		unsigned int uiLeftRegionEnd = uiSideRegionWidth;
+		unsigned int uiRightRegionStart = uiImgWidth - uiSideRegionWidth;
+
+		// For the drive request
+		float fLinX = 0.0f;
+		float fAngZ = 0.0f;
+
+		// Can see a ball
+		if (uiWidth > 0)
+		{
+			m_uiRotateStep = 0;
+			m_bBallFound = true;
+
+			if (uiWidth < m_uiMaxBallWidth)
+			{
+				// Only move forward if seeing the full ball
+				if (!bPartialBallFound)
+				{
+					if (m_uiMaxBallWidth - uiWidth > m_uiFastForwardMaxDistance)
+					{
+						fLinX = m_fFastForwardSpeed;
+					}
+					else
+					{
+						fLinX = m_fSlowForwardSpeed;
+					}
+				}
+			}
+			else if (uiWidth > m_uiMaxBallWidth + m_uiMaxBallWidthVariance)
+			{
+				fLinX = m_fBackwardSpeed;
+			}
+
+			float fLocationPercentage;
+
+			if (uiBallPos < uiLeftRegionEnd)
+			{
+				fLocationPercentage = uiBallPos / static_cast<float>(uiSideRegionWidth);
+				fLocationPercentage = std::min(std::max(fLocationPercentage, 0.0f), 1.0f);
+				if (fLocationPercentage < m_fMinSideRegionSizeFactor)
+				{
+					fLinX = 0.0f;
+				}
+				fAngZ = m_fMinRotateSpeed;
+				//ROS_DEBUG("fLocationPercentage: %1.2f %1.2f fLinX: %1.2f fAngZ: %1.2f", fLocationPercentage, (m_fMinSideRegionSizeFactor), fLinX, fAngZ);
+			}
+			else if (uiBallPos > uiRightRegionStart)
+			{
+				fLocationPercentage = (uiBallPos - uiRightRegionStart) / static_cast<float>(uiSideRegionWidth);
+				fLocationPercentage = std::min(std::max(fLocationPercentage, 0.0f), 1.0f);
+				if (fLocationPercentage < (1.0f - m_fMinSideRegionSizeFactor))
+				{
+					fLinX = 0.0f;
+				}
+				fAngZ = -(m_fMinRotateSpeed);
+				//ROS_DEBUG("fLocationPercentage: %1.2f %1.2f fLinX: %1.2f fAngZ: %1.2f", fLocationPercentage, (1.0f - m_fMinSideRegionSizeFactor), fLinX, fAngZ);
+			}
+		}
+		// Ball is playing hide and seek, try to roughly turn around once to find it
+		else
+		{
+			if (m_bBallFound)
+			{
+				if (m_uiRotateStep >= m_uiMaxRotateStep)
+				{
+					m_bBallFound = false;
+					m_uiRotateStep = 0;
+					m_fFindRotateSpeed *= -1;
+				}
+				else
+				{
+					m_uiRotateStep++;
+					fAngZ = m_fFindRotateSpeed;
+				}
+			}
+		}
+		m_uiPrevBallPos = uiBallPos;
+		driveRobot(fLinX, fAngZ);
 	}
 
 	// The whole logic does not handle yet obstacles partially obstructing the ball view
@@ -134,16 +218,8 @@ private:
 
 		unsigned int uiOffset = img.step / img.width;
 
-		unsigned int uiSideRegionWidth = ((img.width / 2) * m_fSideRegionSizeFactor);
-		unsigned int uiLeftRegionEnd = uiSideRegionWidth;
-		unsigned int uiRightRegionStart = img.width - uiSideRegionWidth;
-
 		bool bBallFound = false;
 		bool bPartialBallFound = false;
-
-		// For the drive request
-		float fLinX = 0.0f;
-		float fAngZ = 0.0f;
 
 		for (uiH = 0; uiH < img.height; uiH++)
 		{
@@ -189,12 +265,6 @@ private:
 				}
 			}
 
-			if (uiCurrentWidth == 0 && bBallFound)
-			{
-				// Assume no more part of the ball to be found
-				break;
-			}
-
 			// Find the current width to determine if we need to move forward
 			// Also get the ball position
 			if (uiCurrentWidth > uiWidth)
@@ -202,84 +272,15 @@ private:
 				uiWidth = uiCurrentWidth;
 				uiBallPos = uiFirstWhitePixelPos + (uiWidth / 2);
 			}
-		}
 
-		// Can see a ball
-		if (uiWidth > 0)
-		{
-			m_uiRotateStep = 0;
-			m_bBallFound = true;
-
-			if (uiWidth < m_uiMaxBallWidth)
+			if (uiCurrentWidth == 0 && bBallFound)
 			{
-				// Only move forward if seeing the full ball
-				if (!bPartialBallFound)
-				{
-					if (m_uiMaxBallWidth - uiWidth > m_uiFastForwardMaxDistance)
-					{
-						fLinX = m_fFastForwardSpeed;
-					}
-					else
-					{
-						fLinX = m_fSlowForwardSpeed;
-					}
-				}
-			}
-			else if (uiWidth > m_uiMaxBallWidth + m_uiMaxBallWidthVariance)
-			{
-				fLinX = m_fBackwardSpeed;
-			}
-
-			if (uiBallPos < uiLeftRegionEnd)
-			{
-				// Try to quickly roughly centre the ball first before moving forward
-				if (uiBallPos < uiLeftRegionEnd - (uiSideRegionWidth * m_fFastRotateSizeFactor))
-				{
-					fLinX = 0.0f;
-					fAngZ = m_fFastRotateSpeed;
-				}
-				else
-				{
-					fAngZ = m_fSlowRotateSpeed;
-				}
-			}
-			else if (uiBallPos > uiRightRegionStart)
-			{
-				// Try to quickly roughly centre the ball first before moving forward
-				if (uiBallPos > uiRightRegionStart + (uiSideRegionWidth * m_fFastRotateSizeFactor))
-				{
-					fLinX = 0.0f;
-					fAngZ = -(m_fFastRotateSpeed);
-				}
-				else
-				{
-					fAngZ = -(m_fSlowRotateSpeed);
-				}
-			}
-			else
-			{
-
-			}
-		}
-		// Ball is playing hide and seek, try to roughly turn around once to find it
-		else
-		{
-			if (m_bBallFound)
-			{
-				if (m_uiRotateStep >= m_uiMaxRotateStep)
-				{
-					m_bBallFound = false;
-					m_uiRotateStep = 0;
-				}
-				else
-				{
-					m_uiRotateStep++;
-					fAngZ = m_fFindRotateSpeed;
-				}
+				// Assume no more part of the ball to be found
+				break;
 			}
 		}
 
-		driveRobot(fLinX, fAngZ);
+		determineMovement(uiWidth, uiBallPos, bPartialBallFound, img.width);
 	}
 };
 
