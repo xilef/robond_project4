@@ -5,13 +5,35 @@
 <robot name="my_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
   <xacro:include filename="$(find my_robot)/urdf/my_robot.gazebo" />
 
-   <material name="Guntank Base Blue">
-     <color rgba="0.133 0.2 0.466 1"/>
-   </material>
+  <xacro:macro name="material_GuntankBaseBlue">
+    <visual>
+      <material>
+        <ambient>0.133 0.2 0.466 1</ambient>
+        <diffuse>0.133 0.2 0.466 1</diffuse>
+        <specular>0.1 0.1 0.1 1</specular>
+        <emissive>0 0 0 0</emissive>
+      </material>
+    </visual>
+  </xacro:macro>
 
-   <material name="Guntank Track Grey">
-     <color rgba="0.490 0.509 0.592 1"/>
-   </material>
+  <material name="Guntank Base Blue">
+    <color rgba="0.133 0.2 0.466 1"/>
+  </material>
+
+  <xacro:macro name="material_GuntankTrackGrey">
+    <visual>
+      <material>
+        <ambient>0.490 0.509 0.592 1</ambient>
+        <diffuse>0.490 0.509 0.592 1</diffuse>
+        <specular>0.1 0.1 0.1 1</specular>
+        <emissive>0 0 0 0</emissive>
+      </material>
+    </visual>
+  </xacro:macro>
+
+  <material name="Guntank Track Grey">
+    <color rgba="0.490 0.509 0.592 1"/>
+  </material>
 
   <link name="robot_footprint"></link>
 
@@ -48,6 +70,9 @@
     </collision>
   </link>
 
+  <gazebo reference="chassis">
+    <xacro:material_GuntankBaseBlue />
+  </gazebo>
 
   <link name='left_wheel'>
     <inertial>
@@ -75,6 +100,10 @@
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="left_wheel">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
 
   <joint type="continuous" name="left_wheel_hinge">
     <origin xyz="0 0.2375 -0.128" rpy="0 0 0"/>
@@ -112,13 +141,17 @@
     </collision>
   </link>
 
+  <gazebo reference="left_back_road_wheel">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
+
   <joint type="continuous" name="left_back_road_wheel_hinge">
     <origin xyz="-0.2 0.2375 -0.128" rpy="0 0 0"/>
     <child link="left_back_road_wheel"/>
     <parent link="chassis"/>
     <axis xyz="0 1 0" rpy="0 0 0"/>
     <limit effort="10000" velocity="1000"/>
-    <dynamics damping="0.0" friction="0.0"/>
+    <dynamics damping="1.0" friction="1.0"/>
   </joint>
 
   <link name='left_front_road_wheel'>
@@ -148,13 +181,17 @@
     </collision>
   </link>
 
+  <gazebo reference="left_front_road_wheel">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
+
   <joint type="continuous" name="left_front_road_wheel_hinge">
     <origin xyz="0.2 0.2375 -0.128" rpy="0 0 0"/>
     <child link="left_front_road_wheel"/>
     <parent link="chassis"/>
     <axis xyz="0 1 0" rpy="0 0 0"/>
     <limit effort="10000" velocity="1000"/>
-    <dynamics damping="0.0" friction="0.0"/>
+    <dynamics damping="1.0" friction="1.0"/>
   </joint>
 
   <link name='left_return_roller'>
@@ -183,6 +220,10 @@
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="left_return_roller">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
 
   <joint type="continuous" name="left_return_roller_hinge">
     <origin xyz="0.1 0.2375 0.03" rpy="0 0 0"/>
@@ -221,6 +262,10 @@
     </collision>
   </link>
 
+  <gazebo reference="right_wheel">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
+
   <joint type="continuous" name="right_wheel_hinge">
     <origin xyz="0 -0.2375 -0.128" rpy="0 0 0"/>
     <child link="right_wheel"/>
@@ -257,13 +302,17 @@
     </collision>
   </link>
 
+  <gazebo reference="right_back_road_wheel">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
+
   <joint type="continuous" name="right_back_road_wheel_hinge">
     <origin xyz="-0.2 -0.2375 -0.128" rpy="0 0 0"/>
     <child link="right_back_road_wheel"/>
     <parent link="chassis"/>
     <axis xyz="0 1 0" rpy="0 0 0"/>
     <limit effort="10000" velocity="1000"/>
-    <dynamics damping="0.0" friction="0.0"/>
+    <dynamics damping="1.0" friction="1.0"/>
   </joint>
 
   <link name='right_front_road_wheel'>
@@ -293,13 +342,17 @@
     </collision>
   </link>
 
+  <gazebo reference="right_front_road_wheel">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
+
   <joint type="continuous" name="right_front_road_wheel_hinge">
     <origin xyz="0.2 -0.2375 -0.128" rpy="0 0 0"/>
     <child link="right_front_road_wheel"/>
     <parent link="chassis"/>
     <axis xyz="0 1 0" rpy="0 0 0"/>
     <limit effort="10000" velocity="1000"/>
-    <dynamics damping="0.0" friction="0.0"/>
+    <dynamics damping="1.0" friction="1.0"/>
   </joint>
 
   <link name='right_return_roller'>
@@ -328,6 +381,10 @@
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="right_return_roller">
+    <xacro:material_GuntankTrackGrey />
+  </gazebo>
 
   <joint type="continuous" name="right_return_roller_hinge">
     <origin xyz="0.1 -0.2375 0.03" rpy="0 0 0"/>

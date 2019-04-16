@@ -9,7 +9,7 @@ public:
 	{
 		ROS_INFO_STREAM("Setup drive_bot service class.");
 
-		m_pubMotorCommand = m_hNode.advertise<geometry_msgs::Twist>("/cmd_vel", 100);
+		m_pubMotorCommand = m_hNode.advertise<geometry_msgs::Twist>("/cmd_vel", 60);
 
 		m_serv = m_hNode.advertiseService("/ball_chaser/command_robot", &DriveBotService::driveRequestHandler, this);
 

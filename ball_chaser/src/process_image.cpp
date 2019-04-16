@@ -83,8 +83,6 @@ private:
 	ros::Subscriber 	m_subImage;
 	ros::ServiceClient 	m_client;
 
-	unsigned int		m_uiPrevBallPos;
-
 	unsigned int 		m_uiMaxBallWidth;
 	unsigned int		m_uiMaxBallWidthVariance;
 
@@ -122,6 +120,7 @@ private:
 
 	void determineMovement(unsigned int uiWidth, unsigned int uiBallPos, bool bPartialBallFound, unsigned int uiImgWidth)
 	{
+		// Declare regions based on the camera image width
 		unsigned int uiSideRegionWidth = ((uiImgWidth / 2) * m_fMaxSideRegionSizeFactor);
 		unsigned int uiLeftRegionEnd = uiSideRegionWidth;
 		unsigned int uiRightRegionStart = uiImgWidth - uiSideRegionWidth;
@@ -136,11 +135,15 @@ private:
 			m_uiRotateStep = 0;
 			m_bBallFound = true;
 
+			// Don't go too near the ball
+			// remove for rocket league
 			if (uiWidth < m_uiMaxBallWidth)
 			{
 				// Only move forward if seeing the full ball
 				if (!bPartialBallFound)
 				{
+					// Slowdown when near
+					// remove for rocket league
 					if (m_uiMaxBallWidth - uiWidth > m_uiFastForwardMaxDistance)
 					{
 						fLinX = m_fFastForwardSpeed;
@@ -157,28 +160,38 @@ private:
 			}
 
 			float fLocationPercentage;
+			float fBallSizeFactor = uiWidth / static_cast<float>(m_uiMaxBallWidth);
+			fBallSizeFactor = std::min(std::max(fBallSizeFactor, 0.1f), 1.0f);
+
+			// Adjust turning speed based on the ball distance
+			// slow when near to prevent overshoots
+			float fAdjustedRotateSpeed = m_fMaxRotateSpeed - ((m_fMaxRotateSpeed - m_fMinRotateSpeed) * fBallSizeFactor);
 
 			if (uiBallPos < uiLeftRegionEnd)
 			{
+				// Turn only when the ball is far from the centre region
+				// to try to reduce course corrections along the way
 				fLocationPercentage = uiBallPos / static_cast<float>(uiSideRegionWidth);
 				fLocationPercentage = std::min(std::max(fLocationPercentage, 0.0f), 1.0f);
 				if (fLocationPercentage < m_fMinSideRegionSizeFactor)
 				{
 					fLinX = 0.0f;
 				}
-				fAngZ = m_fMinRotateSpeed;
-				//ROS_DEBUG("fLocationPercentage: %1.2f %1.2f fLinX: %1.2f fAngZ: %1.2f", fLocationPercentage, (m_fMinSideRegionSizeFactor), fLinX, fAngZ);
+
+				fAngZ = fAdjustedRotateSpeed;
 			}
 			else if (uiBallPos > uiRightRegionStart)
 			{
+				// Turn only when the ball is far from the centre region
+				// to try to reduce course corrections along the way
 				fLocationPercentage = (uiBallPos - uiRightRegionStart) / static_cast<float>(uiSideRegionWidth);
 				fLocationPercentage = std::min(std::max(fLocationPercentage, 0.0f), 1.0f);
-				if (fLocationPercentage < (1.0f - m_fMinSideRegionSizeFactor))
+				if (fLocationPercentage < m_fMinSideRegionSizeFactor)
 				{
 					fLinX = 0.0f;
 				}
-				fAngZ = -(m_fMinRotateSpeed);
-				//ROS_DEBUG("fLocationPercentage: %1.2f %1.2f fLinX: %1.2f fAngZ: %1.2f", fLocationPercentage, (1.0f - m_fMinSideRegionSizeFactor), fLinX, fAngZ);
+
+				fAngZ = -(fAdjustedRotateSpeed);
 			}
 		}
 		// Ball is playing hide and seek, try to roughly turn around once to find it
@@ -199,7 +212,7 @@ private:
 				}
 			}
 		}
-		m_uiPrevBallPos = uiBallPos;
+
 		driveRobot(fLinX, fAngZ);
 	}
 
@@ -207,7 +220,8 @@ private:
 	// also have not handled yet the robot itself being obstructed
 	void processImageCallback(const sensor_msgs::Image img)
 	{
-		unsigned int uiWhitePixel = 255;
+		const unsigned int uiWhitePixel = 255;
+
 		unsigned int uiCurrentWidth;
 		unsigned int uiBlockedWidth;
 		unsigned int uiWidth = 0;
@@ -242,7 +256,7 @@ private:
 					uiCurrentWidth++;
 
 					// Add back the blocked width if there is
-					// This will have a problem if there are multiple white balls in the viewport
+					// this will have a problem if there are multiple white balls in the viewport
 					if (uiBlockedWidth > 0)
 					{
 						uiCurrentWidth += uiBlockedWidth;
@@ -266,16 +280,18 @@ private:
 			}
 
 			// Find the current width to determine if we need to move forward
-			// Also get the ball position
+			// also get the ball position
 			if (uiCurrentWidth > uiWidth)
 			{
 				uiWidth = uiCurrentWidth;
 				uiBallPos = uiFirstWhitePixelPos + (uiWidth / 2);
 			}
 
+			// Assume no more part of the ball to be found
+			// do not waste any more time and immediately exit
+			// for future: can probably exit when the width has been found
 			if (uiCurrentWidth == 0 && bBallFound)
 			{
-				// Assume no more part of the ball to be found
 				break;
 			}
 		}
