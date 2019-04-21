@@ -5,6 +5,10 @@
   <node name="drive_bot" type="drive_bot" pkg="ball_chaser" output="screen" />
   <node name="process_image" type="process_image" pkg="ball_chaser" output="screen">
     <rosparam>
+      minBallDetectWidth: 30
+      heightWidthTolerance: 20
+      sameWidthTolerance: 10
+      maxWidthFoundTolerance: 5
       maxBallWidth: 600
       maxBallWidthVariance: 50
       fastForwardMaxDistance: 30
@@ -19,7 +23,7 @@
       findRotateSpeed: -1.5
       maxSideRegionSizeFactor: 0.9
       minSideRegionSizeFactor: 0.9
-      maxRotateStep: 300
+      maxRotateStep: 1000
     </rosparam>
   </node>
 
