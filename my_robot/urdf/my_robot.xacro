@@ -106,7 +106,7 @@
   </gazebo>
 
   <joint type="continuous" name="left_wheel_hinge">
-    <origin xyz="0 0.2375 -0.128" rpy="0 0 0"/>
+    <origin xyz="0 0.2375 -0.1" rpy="0 0 0"/>
     <child link="left_wheel"/>
     <parent link="chassis"/>
     <axis xyz="0 1 0" rpy="0 0 0"/>
@@ -267,7 +267,7 @@
   </gazebo>
 
   <joint type="continuous" name="right_wheel_hinge">
-    <origin xyz="0 -0.2375 -0.128" rpy="0 0 0"/>
+    <origin xyz="0 -0.2375 -0.1" rpy="0 0 0"/>
     <child link="right_wheel"/>
     <parent link="chassis"/>
     <axis xyz="0 1 0" rpy="0 0 0"/>
