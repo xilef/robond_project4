@@ -17,16 +17,19 @@
     <param name="initial_pose_y" value="0"/>
     <param name="initial_pose_a" value="-1.5707"/>
 
-    <param name="update_min_a" value="35"/>
+    <param name="max_particles" value="2500"/>
+    <param name="update_min_a" value="0.17"/>
     <param name="update_min_d" value="0.1"/>
-    <!--<param name="laser_min_range" value="0.1"/>-->
-    <!--<param name="laser_max_beams" value="50"/>-->
+
+    <param name="laser_max_beams" value="50"/>
   </node>
 
   <!-- Move Base -->
   <node name="move_base" pkg="move_base" type="move_base" respawn="false" output="screen">
     <param name="base_global_planner" value="navfn/NavfnROS" />
     <param name="base_local_planner" value="base_local_planner/TrajectoryPlannerROS"/>
+
+    <param name="max_planning_retries" value="5"/>
 
     <rosparam file="$(find my_robot)/config/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find my_robot)/config/costmap_common_params.yaml" command="load" ns="local_costmap" />
