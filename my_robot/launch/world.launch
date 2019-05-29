@@ -24,7 +24,7 @@
   <!-- Launch other relevant files-->
   <include file="$(find my_robot)/launch/robot_description.launch"/>
 
-<!-- Find my robot Description-->
+  <!-- Find my robot Description-->
   <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find my_robot)/urdf/my_robot.xacro'"/>
 
   <!-- Spawn My Robot -->

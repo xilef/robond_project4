@@ -74,6 +74,44 @@
     <xacro:material_GuntankBaseBlue />
   </gazebo>
 
+  <link name='body'>
+    <inertial>
+      <mass value="5.0"/>
+      <origin xyz="0.0 0 0" rpy=" 0 0 0"/>
+      <inertia
+          ixx="0.1" ixy="0" ixz="0"
+          iyy="0.1" iyz="0"
+          izz="0.1"
+      />
+    </inertial>
+
+    <visual name='body_visual'>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="0.15 0.25 0.25"/>
+      </geometry>
+      <material name="Guntank Base Blue"/>
+    </visual>
+
+    <collision name='collision'>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/> 
+      <geometry>
+        <box size="0.15 0.25 0.25"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <gazebo reference="body">
+    <xacro:material_GuntankBaseBlue />
+  </gazebo>
+
+  <!-- Fixed joint for now -->
+  <joint type="fixed" name="body_hinge">
+    <origin xyz="0 0 0.225" rpy="0 0 0"/>
+    <child link="body"/>
+    <parent link="chassis"/>
+  </joint>
+
   <link name='left_wheel'>
     <inertial>
       <mass value="5.0"/>
@@ -459,6 +497,23 @@
     <origin xyz="0.21 0 0.125" rpy="0 0 0"/>
     <child link="hokuyo"/>
     <parent link="chassis"/>
+    <axis xyz="0 1 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="camera_link_optical">
+
+    <!--<visual name='camera_visual'>
+      <origin xyz="0 0 0" rpy=" 0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+    </visual>-->
+  </link>
+
+  <joint name="camera_optical_joint" type="fixed">
+    <origin xyz="0.075 0 0.125" rpy="0 0 0"/>
+    <parent link="body"/>
+    <child link="camera_link_optical"/>
     <axis xyz="0 1 0" rpy="0 0 0"/>
   </joint>
 </robot>
