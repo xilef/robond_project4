@@ -1,8 +1,6 @@
-# Ball chaser
+# Mapping and SLAM
 
-Submission for Project 2 of the Udacity Robotics Software Engineer Nanodegree Program. This repository contains a robot that has the following features:
-- Chase a solid colored ball if it is within camera view.
-- If it is chasing a ball and it goes out of camera view, seek the ball by turning approximately 360 degrees then give up until a new ball is seen.
+Submission for Project 4 of the Udacity Robotics Software Engineer Nanodegree Program. This repository contains an upgrade to the robot to include an RGB-D camera to be able to use the rtabmap package.
 
 ## How to run
 
@@ -12,7 +10,7 @@ Make sure you have gazebo and rviz installed and you have setup a catkin workspa
 Clone the repo to your catkin workspace's src folder
 
 eg:
-`git clone https://github.com/xilef/robond_project1 /home/robond/workspace/catkin_ws/src
+`git clone https://github.com/xilef/robond_project4 /home/robond/workspace/catkin_ws/src
 `
 
 Go to the root of your catkin workspace and run `catkin_make` to build the whole repo
@@ -27,11 +25,15 @@ Once all the setup is done run:
 
 to load the world.
 
-Open a new terminal, navigate to your catkin workspace and run:
+Open a new terminal, navigate to your catkin workspace and run the teleop node:
 
-`roslaunch ball_chaser ball_chaser.launch`
+`rosrun teleop_twist_keyboard teleop_twist_keyboard.py`
 
-to run the ball chasing service
+Finally open a new terminal, nvaigate to your catkin workspace and run the mapping node:
+
+`roslaunch my_robot mapping.launch`
+
+Once everything is setup you can now manually control the robot all around the world to create a map.
 
 ## License
 
